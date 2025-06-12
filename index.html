@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>순차적 문제 풀이 (이미지 중심)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f2f5;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 100%;
+            max-width: 600px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+        }
+
+        #problem-image-container {
+            margin-bottom: 30px;
+            height: 250px; /* 이미지 표시 영역 높이 조정 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #e9ecef; /* 이미지가 없을 때 배경색 */
+            border-radius: 8px;
+            overflow: hidden; /* 이미지가 컨테이너를 넘지 않도록 */
+        }
+
+        #problem-image {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+            object-fit: contain; /* 이미지 비율 유지하며 컨테이너에 맞춤 */
+            border-radius: 8px;
+        }
+
+        #problem-status {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        #answer-form label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #555;
+            font-size: 1.1rem;
+        }
+
+        #user-answer {
+            width: calc(100% - 24px); /* Padding 고려 */
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        #submit-answer-btn {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: background-color 0.3s ease;
+            width: 100%;
+        }
+        #submit-answer-btn:hover {
+            background-color: #0056b3;
+        }
+
+        #feedback-message {
+            margin-top: 20px;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        .correct { color: #28a745; }
+        .incorrect { color: #dc3545; }
+
+        #completion-message {
+            display: none; /* 초기에는 숨김 */
+            margin-top: 30px;
+            font-size: 1.4rem;
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        #reset-button {
+            display: none; /* 초기에는 숨김 */
+            background-color: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            margin-top: 20px;
+            transition: background-color 0.3s ease;
+        }
+        #reset-button:hover {
+            background-color: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>문제 풀이</h1>
+        <div id="problem-image-container">
+            <img id="problem-image" src="" alt="문제 관련 이미지">
+        </div>
+        <p id="problem-status"></p>
+        
+        <form id="answer-form">
+            <label for="user-answer">정답을 입력하세요:</label>
+            <input type="text" id="user-answer" placeholder="여기에 정답을 입력" required>
+            <button type="submit" id="submit-answer-btn">정답 제출</button>
+            <p id="feedback-message"></p>
+        </form>
+
+        <div id="completion-message"></div>
+        <button id="reset-button">다시 시작하기</button>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const problemImage = document.getElementById('problem-image');
+            const problemStatus = document.getElementById('problem-status');
+            const userAnswerInput = document.getElementById('user-answer');
+            const answerForm = document.getElementById('answer-form');
+            const feedbackMessage = document.getElementById('feedback-message');
+            const completionMessage = document.getElementById('completion-message');
+            const resetButton = document.getElementById('reset-button');
+            
+            let currentProblemIndex = 0;
+            let correctAnswersCount = 0; // 맞힌 문제 수를 저장할 변수
+
+            // --- 문제 데이터: 이미지 파일명을 .png로 수정했습니다! ---
+            const problems = [
+                {
+                    answer: "투게더",
+                    image: "image1.png" // 확장자 .png로 변경
+                },
+                {
+                    answer: "빌딩",
+                    image: "image2.png" // 확장자 .png로 변경
+                },
+                {
+                    answer: "전투기",
+                    image: "image3.png" // 확장자 .png로 변경
+                },
+                {
+                    answer: "도쿄",
+                    image: "image4.png" // 확장자 .png로 변경
+                },
+                {
+                    answer: "보잉747",
+                    image: "image5.png" // 확장자 .png로 변경
+                },
+                {
+                    answer: "문제",
+                    image: "image6.png" // 확장자 .png로 변경
+                },
+                {
+                    answer: "빨간색",
+                    image: "image7.png" // 확장자 .png로 변경
+                },
+                {
+                    answer: "하겐다즈",
+                    image: "image8.png" // 확장자 .png로 변경
+                },
+                {
+                    answer: "베르누이의원리",
+                    image: "image9.png" // 확장자 .png로 변경
+                },
+                {
+                    answer: "알람시계",
+                    image: "image10.png" // 확장자 .png로 변경
+                },
+                {
+                    answer: "시계",
+                    image: "image11.png" // 확장자 .png로 변경
+                },
+                {
+                    answer: "열차차",
+                    image: "image12.png" // 확장자 .png로 변경
+                }
+            ];
+            // --- 문제 데이터 끝 ---
+
+            function loadProblem(index) {
+                if (index < problems.length) {
+                    const problem = problems[index];
+                    
+                    // 이미지 경로를 `./images/파일이름.png`로 설정
+                    problemImage.src = `./images/${problem.image}`;
+                    // `alt` 속성은 이미지가 로드되지 않을 때 유용합니다.
+                    // 현재 문제 번호와 함께 "문제 이미지"로 설정했습니다.
+                    problemImage.alt = `문제 ${index + 1} 이미지`; 
+                    
+                    problemStatus.textContent = `${index + 1} / ${problems.length} 문제`;
+                    userAnswerInput.value = '';
+                    feedbackMessage.textContent = '';
+                    feedbackMessage.className = ''; // 클래스 초기화
+
+                    // 문제 화면 관련 요소 보이기
+                    problemImage.style.display = 'block'; 
+                    answerForm.style.display = 'block';
+                    
+                    // 완료 메시지 및 리셋 버튼 숨기기
+                    completionMessage.style.display = 'none';
+                    resetButton.style.display = 'none';
+                    userAnswerInput.focus();
+                } else {
+                    // 모든 문제 완료 시
+                    problemImage.style.display = 'none'; // 이미지 숨기기
+                    answerForm.style.display = 'none';
+                    problemStatus.textContent = '';
+                    
+                    // 맞힌 문제 수와 함께 완료 메시지 업데이트 및 표시
+                    completionMessage.textContent = `모든 문제를 성공적으로 완료했습니다! 🎉 당신은 ${problems.length}문제 중 ${correctAnswersCount}문제를 맞혔습니다!`;
+                    completionMessage.style.display = 'block';
+                    resetButton.style.display = 'block';
+                }
+            }
+
+            // 정답 제출 폼 이벤트 리스너
+            answerForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+
+                const userAnswer = userAnswerInput.value.trim();
+                const currentProblem = problems[currentProblemIndex];
+
+                // 정답 비교 (대소문자 무시)
+                if (userAnswer.toLowerCase() === currentProblem.answer.toLowerCase()) {
+                    feedbackMessage.textContent = '정답입니다! 🎉';
+                    feedbackMessage.className = 'correct';
+                    correctAnswersCount++; // 정답일 경우 카운트 증가
+                } else {
+                    feedbackMessage.textContent = `오답입니다. 정답은 "${currentProblem.answer}"였습니다.`;
+                    feedbackMessage.className = 'incorrect';
+                }
+
+                // 1초 후 다음 문제 로드
+                setTimeout(() => {
+                    currentProblemIndex++;
+                    loadProblem(currentProblemIndex);
+                }, 1000);
+            });
+
+            // "다시 시작하기" 버튼 이벤트 리스너
+            resetButton.addEventListener('click', () => {
+                currentProblemIndex = 0;
+                correctAnswersCount = 0; // 맞힌 문제 수 초기화
+                loadProblem(currentProblemIndex);
+            });
+
+            // 페이지 로드 시 첫 번째 문제 로드
+            loadProblem(currentProblemIndex);
+        });
+    </script>
+</body>
+</html>
